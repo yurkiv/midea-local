@@ -40,6 +40,9 @@ lint.ignore = [
 "library_test.py" = [
     "PLR0915",  # Too many statements
 ]
+"midealocal/devices/c1/message.py" = [
+    "PLR2004",  # Protocol byte indices and length thresholds
+]
 "midealocal/security.py" = [
     "S324",     # Probable use of insecure hash functions in `hashlib`: `md5`
 ]
