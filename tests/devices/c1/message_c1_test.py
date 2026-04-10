@@ -7,7 +7,6 @@ from midealocal.devices.c1.message import (
     MessagePower,
     MessageQuery,
     MessageSetHeating,
-    MessageSetHotStyle,
     c1_error_code,
 )
 from midealocal.message import ListTypes
@@ -30,7 +29,7 @@ class TestC1GeneralMessageBody:
         assert msg.heating is True
         assert msg.fault is False
         assert msg.error_code == "normal"
-        assert msg.wait_power is False
+        assert msg.standby is False
         assert msg.warm_power is False
         assert msg.return_temperature == 25.0
         assert msg.current_temperature == 42.0
@@ -84,15 +83,13 @@ class TestC1GeneralMessageBody:
         assert msg.sleep_mode_target_temperature == 30.0
 
     def test_packed_aux_byte(self) -> None:
-        """Lua bodyBytes[33]: buzzer, pump, 3-way, unit type, light_gear."""
+        """Lua bodyBytes[33]: pump, 3-way, unit type (top bits = screen brightness, not exposed)."""
         body = bytearray(32)
-        body[22] = 0xAF  # buzzer, pump, 3-way alt, radiator; light_gear 5 in top bits
+        body[22] = 0x0E  # pump, 3-way alt, radiator; no buzzer bit
         msg = C1GeneralMessageBody(body)
-        assert msg.buzzer_on is True
         assert msg.pump_on is True
         assert msg.three_way_mode == "alternate"
         assert msg.heating_unit_type == "radiator"
-        assert msg.light_gear == 5
 
     def test_error_code_priority_f0_over_e8(self) -> None:
         """F0 (byte14 bit0) wins before E8 (byte14 bit7)."""
@@ -141,16 +138,6 @@ class TestMessageQuery:
         """Query body is body_type 0x01 plus payload 0x01."""
         query = MessageQuery(protocol_version=ProtocolVersion.V3)
         assert query.body == bytearray([0x01, 0x01])
-
-
-class TestMessageSetHotStyle:
-    """Test hot_style segment."""
-
-    def test_hot_style_bits(self) -> None:
-        """Sub 0x02 with style bits."""
-        msg = MessageSetHotStyle(protocol_version=ProtocolVersion.V3)
-        msg.hot_style = 3
-        assert msg.body == bytearray([0x14, 0x02, 0x03])
 
 
 class TestMessageSetHeating:

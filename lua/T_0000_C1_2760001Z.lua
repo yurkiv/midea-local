@@ -232,13 +232,13 @@ local function parseByteToJson(status,bodyBytes)
         else
             status["power"]="off"
         end
-        --待机中
+        -- Standby (待机); Meiju JSON key remains wait_power
         if(bodyBytes[13] and bit.band(bodyBytes[13], 0x02) == 0x02) then
             status["wait_power"]="on"
         else
             status["wait_power"]="off"
         end
-        --加热中
+        -- Heating (加热中); Meiju JSON key remains hot_power
         if(bodyBytes[13] and bit.band(bodyBytes[13], 0x04) == 0x04) then
             status["hot_power"]="on"
         else

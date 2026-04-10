@@ -14,7 +14,6 @@ from .message import (
     MessagePower,
     MessageQuery,
     MessageSetHeating,
-    MessageSetHotStyle,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ class DeviceAttributes(StrEnum):
     """Midea C1 device attributes."""
 
     power = "power"
-    wait_power = "wait_power"
+    standby = "standby"
     heating = "heating"
     warm_power = "warm_power"
     cold_power = "cold_power"
@@ -37,22 +36,15 @@ class DeviceAttributes(StrEnum):
     heating_target_temperature = "heating_target_temperature"
     heating_gap_temperature = "heating_gap_temperature"
     heating_mode = "heating_mode"
-    heating_mode_code = "heating_mode_code"
     user_mode_target_temperature = "user_mode_target_temperature"
     activity_mode_target_temperature = "activity_mode_target_temperature"
     sleep_mode_target_temperature = "sleep_mode_target_temperature"
-    rate_lower = "rate_lower"
-    rate_high = "rate_high"
-    rated_power = "rated_power"
     last_time = "last_time"
     current_power = "current_power"
     flow_volume = "flow_volume"
-    hot_style = "hot_style"
-    buzzer_on = "buzzer_on"
     pump_on = "pump_on"
     three_way_mode = "three_way_mode"
     heating_unit_type = "heating_unit_type"
-    light_gear = "light_gear"
     status = "status"
 
 
@@ -86,7 +78,7 @@ class MideaC1Device(MideaDevice):
             subtype=subtype,
             attributes={
                 DeviceAttributes.power: False,
-                DeviceAttributes.wait_power: False,
+                DeviceAttributes.standby: False,
                 DeviceAttributes.heating: False,
                 DeviceAttributes.warm_power: False,
                 DeviceAttributes.cold_power: False,
@@ -99,22 +91,15 @@ class MideaC1Device(MideaDevice):
                 DeviceAttributes.heating_target_temperature: None,
                 DeviceAttributes.heating_gap_temperature: None,
                 DeviceAttributes.heating_mode: "unknown",
-                DeviceAttributes.heating_mode_code: 0,
                 DeviceAttributes.user_mode_target_temperature: None,
                 DeviceAttributes.activity_mode_target_temperature: None,
                 DeviceAttributes.sleep_mode_target_temperature: None,
-                DeviceAttributes.rate_lower: 0,
-                DeviceAttributes.rate_high: 0,
-                DeviceAttributes.rated_power: 0,
                 DeviceAttributes.last_time: 0,
                 DeviceAttributes.current_power: 0,
                 DeviceAttributes.flow_volume: 0,
-                DeviceAttributes.hot_style: 0,
-                DeviceAttributes.buzzer_on: False,
                 DeviceAttributes.pump_on: False,
                 DeviceAttributes.three_way_mode: "heating",
                 DeviceAttributes.heating_unit_type: "floor_heating",
-                DeviceAttributes.light_gear: 0,
                 DeviceAttributes.status: "off",
             },
         )
@@ -214,14 +199,6 @@ class MideaC1Device(MideaDevice):
             message.gap_temperature = 0
         self.build_send(message)
 
-    def set_hot_style(self, hot_style: int) -> None:
-        """Set heat-supply style; Lua 0x14 / 0x02 (bit0=style1, bit1=style2)."""
-        if not self._supports_segment_set():
-            return
-        message = MessageSetHotStyle(self._message_protocol_version)
-        message.hot_style = hot_style & 0x03
-        self.build_send(message)
-
     def set_attribute(self, attr: str, value: bool | str | float) -> None:
         """Midea C1 device set attribute."""
         if attr == DeviceAttributes.power:
@@ -240,8 +217,6 @@ class MideaC1Device(MideaDevice):
                     float(target),
                     heating_mode=self._heating_mode_code(value),
                 )
-        elif attr == DeviceAttributes.hot_style and isinstance(value, int | float):
-            self.set_hot_style(int(value))
 
     def set_customize(self, customize: str) -> None:
         """Midea C1 device set customize (JSON, same style as other appliances)."""
