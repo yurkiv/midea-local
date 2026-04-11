@@ -79,6 +79,19 @@ class DeviceAttributes(StrEnum):
     day_water_consumption = "day_water_consumption"
     volume = "volume"
     rate = "rate"
+    error_code = "error_code"
+    flow_rate = "flow_rate"
+    discharge_left_time = "discharge_left_time"
+    bottom_temp = "bottom_temp"
+    elec_warning = "elec_warning"
+    ele_exception = "ele_exception"
+    sensor_error = "sensor_error"
+    limit_error = "limit_error"
+    communication_error = "communication_error"
+    sterilize_left_days = "sterilize_left_days"
+    sterilize_cycle_index = "sterilize_cycle_index"
+    uv_sterilize_minute = "uv_sterilize_minute"
+    uv_sterilize_second = "uv_sterilize_second"
 
 
 class MideaE2Device(MideaDevice):
@@ -150,6 +163,19 @@ class MideaE2Device(MideaDevice):
                 DeviceAttributes.day_water_consumption: None,
                 DeviceAttributes.volume: None,
                 DeviceAttributes.rate: None,
+                DeviceAttributes.error_code: 0,
+                DeviceAttributes.flow_rate: 0,
+                DeviceAttributes.discharge_left_time: 0,
+                DeviceAttributes.bottom_temp: False,
+                DeviceAttributes.elec_warning: False,
+                DeviceAttributes.ele_exception: False,
+                DeviceAttributes.sensor_error: False,
+                DeviceAttributes.limit_error: False,
+                DeviceAttributes.communication_error: False,
+                DeviceAttributes.sterilize_left_days: 0,
+                DeviceAttributes.sterilize_cycle_index: 0,
+                DeviceAttributes.uv_sterilize_minute: 0,
+                DeviceAttributes.uv_sterilize_second: 0,
             },
         )
         self._default_old_protocol = OldProtocol.auto

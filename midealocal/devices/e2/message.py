@@ -12,6 +12,8 @@ from midealocal.message import (
 HEATING_POWER_BYTE = 34
 PROTECTION_BYTE = 22
 WATER_CONSUMPTION_BYTE = 25
+E2_FAULT_BYTE = 33
+E2_STERILIZE_EXTRA_BYTE = 35
 
 
 class MessageE2Base(MessageRequest):
@@ -217,8 +219,10 @@ class E2GeneralMessageBody(MessageBody):
         self.water_flow = (body[2] & 0x10) > 0  # water_flow
         self.sterilization = (body[2] & 0x40) > 0  # sterilization
         self.variable_heating = (body[2] & 0x80) > 0  # frequency_hot
+        self.error_code = int(body[3]) if len(body) > 3 else 0
         self.current_temperature = float(body[4])
         self.heat_water_level = body[5]  # heat_water_level
+        self.flow_rate = int(body[6]) if len(body) > 6 else 0
         self.eplus = (body[7] & 0x01) > 0  # eplus
         self.fast_wash = (body[7] & 0x02) > 0  # fast_wash
         self.half_heat = (body[7] & 0x04) > 0  # half_heat
@@ -242,8 +246,11 @@ class E2GeneralMessageBody(MessageBody):
         self.top_temp = body[14]
         self.bottom_heat = (body[15] & 0x01) > 0
         self.top_heat = (body[15] & 0x02) > 0
+        self.elec_warning = (body[15] & 0x20) > 0 if len(body) > 15 else False
+        self.bottom_temp = (body[15] & 0x40) > 0 if len(body) > 15 else False
         self.water_cyclic = (body[15] & 0x80) > 0
         self.water_system = body[16]
+        self.discharge_left_time = int(body[17]) if len(body) > 17 else 0
         # in_temperature
         self.in_temperature = float(body[18]) if len(body) > PROTECTION_BYTE else None
         # protect
@@ -256,6 +263,15 @@ class E2GeneralMessageBody(MessageBody):
         # passwater_lowbyte/passwater_highbyte
         if len(body) > WATER_CONSUMPTION_BYTE:
             self.water_consumption = body[24] + (body[25] << 8)
+        self.ele_exception = (body[29] & 0x10) > 0 if len(body) > 29 else False
+        if len(body) > E2_FAULT_BYTE:
+            self.sensor_error = (body[E2_FAULT_BYTE] & 0x01) > 0
+            self.limit_error = (body[E2_FAULT_BYTE] & 0x02) > 0
+            self.communication_error = (body[E2_FAULT_BYTE] & 0x80) > 0
+        else:
+            self.sensor_error = False
+            self.limit_error = False
+            self.communication_error = False
         # volume
         if len(body) > HEATING_POWER_BYTE:
             self.volume = body[27]
@@ -265,6 +281,16 @@ class E2GeneralMessageBody(MessageBody):
         # cur_rate
         if len(body) > HEATING_POWER_BYTE:
             self.heating_power = body[34] * 100
+        if len(body) > E2_STERILIZE_EXTRA_BYTE + 3:
+            self.sterilize_left_days = int(body[35])
+            self.sterilize_cycle_index = int(body[36])
+            self.uv_sterilize_minute = int(body[37])
+            self.uv_sterilize_second = int(body[38])
+        else:
+            self.sterilize_left_days = 0
+            self.sterilize_cycle_index = 0
+            self.uv_sterilize_minute = 0
+            self.uv_sterilize_second = 0
 
 
 class MessageE2Response(MessageResponse):
@@ -273,6 +299,7 @@ class MessageE2Response(MessageResponse):
     def __init__(self, message: bytes) -> None:
         """Initialize E2 message response."""
         super().__init__(bytearray(message))
+        body = super().body
         if (
             self.message_type in [MessageType.query, MessageType.notify1]
             and self.body_type == 0x01
@@ -280,5 +307,5 @@ class MessageE2Response(MessageResponse):
             self.message_type == MessageType.set
             and self.body_type in [0x01, 0x02, 0x04, 0x14]
         ):
-            self.set_body(E2GeneralMessageBody(super().body))
+            self.set_body(E2GeneralMessageBody(body))
         self.set_attr()
